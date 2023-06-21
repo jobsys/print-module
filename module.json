@@ -1,0 +1,11 @@
+{
+    "name": "Print",
+    "alias": "print",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Print\\Providers\\PrintServiceProvider"
+    ],
+    "files": []
+}
