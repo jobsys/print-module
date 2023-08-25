@@ -4,7 +4,13 @@
 ## 模块安装
 
 ```bash
-composer require jobsys/print-module
+
+# 安装依赖
+composer require jobsys/print-module  --dev
+
+# 启用模块
+php artisan module:enable Print && php artisan module:publish-migration Print && php artisan migrate
+
 ```
 
 ### 依赖
@@ -26,6 +32,29 @@ composer require jobsys/print-module
 "Print" => [
     "route_prefix" => "manager",                                                    // 路由前缀
 ]
+
+// Permission 添加权限
+"Permission" => [
+    "permissions" => [
+        "page.manager.print.index" => [
+            "display_name" => "打印设置",
+            "children" => [
+                "api.manager.print.template.edit" => "编辑打印模板",
+                "api.manager.print.template.variable.edit" => "编辑打印模板参数",
+                "api.manager.print.template.design.edit" => "设计打印模板",
+                "api.manager.print.template.items" => "查看打印模板列表",
+                "api.manager.print.template.item" => "查看打印模板详情",
+                "api.manager.print.template.delete" => "删除打印模板",
+                "api.manager.print.template.copy" => "复制打印模板",
+            ]
+        ],
+    ]
+]
+```
+
+```bash
+# 同步权限
+php artisan permission:sync
 ```
 
 ## 模块功能
@@ -49,6 +78,14 @@ composer require jobsys/print-module
 !> 需要在页面引入 [`print-lock.css`](https://gitee.com/sinceow/land-docs/raw/master/attachments/print-lock.css ':ignore :target=_blank')文件，否则在打印时可能会出现多页内容重叠的情况。可以参考 [【vue-plugin-hiprint】使用-入门篇](https://mp.weixin.qq.com/s/4N4f7CkxodA-fuTJ_FbkOQ)
 
 !> 引用方式 `<link rel="stylesheet" media="print" type="text/css" href="{{asset('print-lock.css')}}">`，使用 `import` 引入方式无效。
+
+!> 在入口文件 `main.js` 处禁止链接打印机
+
+```js
+import { disAutoConnect } from "vue-plugin-hiprint"
+
+disAutoConnect()
+```
 
 ### 打印
 打印功能是依赖模板设计功能完成，由于打印模板插件本身就集成了设计、预览、打印功能，所以在打印的时候将会隐藏设计功能，直接进行预览和打印。
