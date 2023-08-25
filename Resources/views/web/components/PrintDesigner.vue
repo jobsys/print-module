@@ -77,12 +77,12 @@
 						</a-button-group>
 						<!-- 保存/清空 -->
 						<a-button-group>
-							<NewbieButton type="primary" :fetcher="state.saveFetcher" icon="SaveOutlined" @click="onSave"> 保存 </NewbieButton>
+							<NewbieButton type="primary" :fetcher="state.saveFetcher" :icon="h(SaveOutlined)" @click="onSave"> 保存 </NewbieButton>
 							<a-popconfirm title="是否确认清空?" @confirm="clearPaper">
 								<template #icon>
 									<QuestionCircleOutlined style="color: red" />
 								</template>
-								<a-button type="danger">
+								<a-button danger>
 									清空
 									<template #icon>
 										<CloseOutlined />
