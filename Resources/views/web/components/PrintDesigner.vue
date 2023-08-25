@@ -117,7 +117,7 @@
 		</a-card>
 
 		<a-modal
-			:visible="state.preview.visible"
+			:open="state.preview.visible"
 			:mask-closable="false"
 			:body-style="{ padding: 0, minHeight: '300px' }"
 			:style="{ top: isPreviewOnly ? 0 : `20px` }"
@@ -162,10 +162,10 @@ import {
 	ZoomInOutlined,
 	ZoomOutOutlined,
 } from "@ant-design/icons-vue"
-import { NewbieButton } from "@web/components/"
+import { NewbieButton } from "jobsys-newbie"
 import { message } from "ant-design-vue"
 import { hiprint } from "vue-plugin-hiprint"
-import { useFetch } from "@/js/hooks/web/network"
+import { useFetch } from "jobsys-newbie/hooks"
 import { isObject } from "lodash-es"
 
 const route = inject("route")
