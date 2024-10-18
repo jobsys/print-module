@@ -4,11 +4,11 @@
 	<div v-else>
 		<NewbieTable
 			ref="list"
-			:url="route('api.manager.print.template.items', { classify: 1 })"
+			:url="route('api.manager.print.template.items')"
 			:columns="columns()"
 			:pagination="false"
 			:filterable="false"
-			:after-fetched="myFetched"
+			:after-fetched="afterFetched"
 			:table-props="{ defaultExpandAllRows: true }"
 		>
 			<template #functional>
@@ -154,8 +154,7 @@ const props = defineProps({
 const list = ref(null)
 const edit = ref(null)
 
-const parentOptions = props.parentTemplates.map((item) => ({ label: item.display_name, value: item.id }))
-parentOptions.unshift({ label: "全新模板", value: 0 })
+const parentOptions = props.parentTemplates.map((item) => ({ label: item.name, value: item.id }))
 
 const route = inject("route")
 const auth = inject("auth")
@@ -185,7 +184,7 @@ const state = reactive({
 	variableFetcher: { loading: false },
 })
 
-const myFetched = (res) => {
+const afterFetched = (res) => {
 	state.options = res.result
 	return {
 		items: res.result.map((item) => {
@@ -205,7 +204,7 @@ const myFetched = (res) => {
 const getForm = () => {
 	return [
 		{
-			key: "display_name",
+			key: "name",
 			title: "模板名称",
 			required: true,
 		},
@@ -214,6 +213,7 @@ const getForm = () => {
 			title: "模板原型",
 			type: "select",
 			options: state.parentOptions,
+			help: "留空为全新模板",
 		},
 		{
 			key: "description",
@@ -327,7 +327,7 @@ const closeEditor = (isRefresh) => {
 
 const onDelete = (item) => {
 	const modal = useModalConfirm(
-		`您确认要删除 ${item.display_name} 吗？`,
+		`您确认要删除 ${item.name} 吗？`,
 		async () => {
 			try {
 				const res = await useFetch().post(route("api.manager.print.template.delete"), { id: item.id })
@@ -346,7 +346,7 @@ const onDelete = (item) => {
 
 const onCopy = (item) => {
 	const modal = useModalConfirm(
-		`您确认要复制 ${item.display_name} 吗？`,
+		`您确认要复制 ${item.name} 吗？`,
 		async () => {
 			try {
 				const res = await useFetch().post(route("api.manager.print.template.copy"), { id: item.id })
@@ -368,15 +368,13 @@ const columns = () => {
 		{
 			title: "模板名称",
 			width: 200,
-			dataIndex: "display_name",
-			key: "name",
+			dataIndex: "name",
 			ellipsis: true,
 		},
 		{
 			title: "模板描述",
 			width: 200,
 			dataIndex: "description",
-			key: "description",
 			ellipsis: true,
 		},
 		{

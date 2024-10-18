@@ -3,10 +3,10 @@
 namespace Modules\Print\Entities;
 
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Modules\Starter\Entities\BaseModel;
 
-class PrintHistory extends BaseModel
+class PrintHistory extends Model
 {
 
     public function template(): BelongsTo

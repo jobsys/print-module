@@ -152,7 +152,7 @@
 </template>
 
 <script setup>
-import { computed, inject, onMounted, reactive, ref } from "vue"
+import { computed, h, inject, nextTick, onMounted, reactive, ref } from "vue"
 import {
 	CloseOutlined,
 	EyeOutlined,
@@ -166,7 +166,7 @@ import { NewbieButton } from "jobsys-newbie"
 import { message } from "ant-design-vue"
 import { hiprint } from "vue-plugin-hiprint"
 import { useFetch } from "jobsys-newbie/hooks"
-import { isObject } from "lodash-es"
+import { isEmpty, isObject } from "lodash-es"
 
 const route = inject("route")
 
@@ -179,9 +179,9 @@ const props = defineProps({
 
 let hiprintTemplate
 
-const elementContainerRef = ref(null)
-const designerContainerRef = ref(null)
-const previewHtmlRef = ref(null)
+const elementContainerRef = ref()
+const designerContainerRef = ref()
+const previewHtmlRef = ref()
 
 const state = reactive({
 	currentPaper: {
@@ -254,15 +254,11 @@ const commonTableParams = {
 	isEnableMergeCell: true, //合并单元格
 }
 
-console.log("printData", props.printData)
-
 const isPreviewOnly = computed(
 	() =>
 		props.printData &&
 		((isObject(props.printData) && Object.keys(props.printData).length) || (Array.isArray(props.printData) && props.printData.length)),
 )
-
-console.log("isPreviewOnly", isPreviewOnly)
 
 const currentPageType = computed(() => {
 	let type = "other"
@@ -280,7 +276,7 @@ const currentPageType = computed(() => {
 
 /**
  * 设置纸张大小
- * @param type [A3, A4, A5, B3, B4, B5, other]
+ * @param type
  * @param {Object} value
  */
 const setPaper = (type, value) => {
@@ -297,6 +293,10 @@ const setPaper = (type, value) => {
 	}
 }
 
+/**
+ * 缩放
+ * @param big
+ */
 const changeScale = (big) => {
 	let scaleValue = state.scale.value
 	if (big) {
@@ -330,20 +330,43 @@ const clearPaper = () => {
 	}
 }
 
+const processPreviewData = () => {
+	if (!isEmpty(props.printData)) {
+		return props.printData
+	}
+
+	if (!props.variables.length) {
+		return {}
+	}
+
+	const data = {}
+
+	const processData = (variables) => {
+		variables.forEach((variable) => {
+			data[variable.field] = variable.data
+		})
+	}
+
+	processData(props.variables)
+
+	return data
+}
+
 const onPreview = () => {
 	state.preview.visible = true
 	state.preview.isLoading = true
-	setTimeout(() => {
-		state.preview.html = hiprintTemplate.getHtml(state.preview.printData).html()
+	state.preview.printData = processPreviewData()
+	state.preview.html = hiprintTemplate.getHtml(state.preview.printData).html()
+	nextTick(() => {
 		state.preview.isLoading = false
-	}, 1000)
+	})
 }
 
 const onSave = async () => {
 	const res = await useFetch(state.saveFetcher).post(route("api.manager.print.template.design.edit"), {
 		id: props.config.id,
 		template: hiprintTemplate.getJson(),
-		template_html: hiprintTemplate.getHtml(state.preview.printData).html(),
+		//template_html: hiprintTemplate.getHtml(state.preview.printData).html(),
 	})
 
 	if (res.status === "SUCCESS") {
@@ -533,6 +556,15 @@ const init = () => {
 		template: props.template,
 		settingContainer: "#PrintElementOptionSetting",
 		paginationContainer: ".hiprint-printPagination",
+		// 自定义可选字体
+		// 或者使用 hiprintTemplate.setFontList([])
+		// 或元素中 options.fontList: []
+		fontList: [
+			{ title: "微软雅黑", value: "Microsoft YaHei" },
+			{ title: "黑体", value: "STHeitiSC-Light" },
+			{ title: "宋体", value: "SimSun" },
+		],
+		history: true, //是否需要 撤销重做功能
 		onImageChooseClick: (target) => {
 			// 创建input，模拟点击，然后 target.refresh 更新
 			const input = document.createElement("input")
@@ -563,8 +595,6 @@ const init = () => {
 	if (isPreviewOnly.value) {
 		onPreview()
 	}
-
-	console.log(hiprintTemplate)
 }
 
 onMounted(() => {
