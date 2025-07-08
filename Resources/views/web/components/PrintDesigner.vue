@@ -19,7 +19,7 @@
 									<a-input-group compact style="margin: 10px 10px">
 										<a-input
 											type="number"
-											v-model="state.paperWidth"
+											v-model:value="state.paperWidth"
 											style="width: 100px; text-align: center"
 											placeholder="宽(mm)"
 										/>
@@ -30,7 +30,7 @@
 										/>
 										<a-input
 											type="number"
-											v-model="state.paperHeight"
+											v-model:value="state.paperHeight"
 											style="width: 100px; text-align: center; border-left: 0"
 											placeholder="高(mm)"
 										/>
@@ -59,6 +59,13 @@
 							<template #icon>
 								<ZoomInOutlined />
 							</template>
+						</a-button>
+
+						<a-button type="primary" @click="rotatePaper()">
+							<template #icon>
+								<RotateRightOutlined />
+							</template>
+							旋转
 						</a-button>
 						<!-- 预览/打印 -->
 						<a-button-group>
@@ -117,11 +124,11 @@
 		</a-card>
 
 		<a-modal
+			wrap-class-name="printer-preview-modal"
 			:open="state.preview.visible"
 			:mask-closable="false"
-			:body-style="{ padding: 0, minHeight: '300px' }"
 			:style="{ top: isPreviewOnly ? 0 : `20px` }"
-			:width="`${state.currentPaper.width}mm`"
+			:width="`${state.isRotate ? state.currentPaper.height : state.currentPaper.width}mm`"
 			:mask-style="{ backgroundColor: isPreviewOnly ? '#333' : 'rgba(0, 0, 0, .5)' }"
 			:closable="!isPreviewOnly"
 			:footer="null"
@@ -132,7 +139,6 @@
 			</a-spin>
 			<template #title>
 				<a-space>
-					<div style="margin-right: 20px">打印预览</div>
 					<a-button :loading="state.preview.isWaiting" type="primary" @click.stop="onPreviewPrint">
 						<template #icon>
 							<PrinterOutlined />
@@ -143,7 +149,7 @@
 						<template #icon>
 							<SaveOutlined />
 						</template>
-						另存为 PDF
+						下载PDF
 					</a-button>
 				</a-space>
 			</template>
@@ -161,6 +167,7 @@ import {
 	SaveOutlined,
 	ZoomInOutlined,
 	ZoomOutOutlined,
+	RotateRightOutlined,
 } from "@ant-design/icons-vue"
 import { NewbieButton } from "jobsys-newbie"
 import { message } from "ant-design-vue"
@@ -235,6 +242,8 @@ const state = reactive({
 		html: "",
 	},
 
+	isRotate: false, // 是否旋转
+
 	saveFetcher: { loading: false },
 })
 
@@ -290,6 +299,16 @@ const setPaper = (type, value) => {
 		}
 	} catch (error) {
 		message.error(`操作失败: ${error}`)
+	}
+}
+
+/**
+ * 旋转纸张
+ */
+const rotatePaper = () => {
+	if (hiprintTemplate) {
+		state.isRotate = !state.isRotate
+		hiprintTemplate.rotatePaper()
 	}
 }
 
@@ -375,7 +394,7 @@ const onSave = async () => {
 }
 
 const onSaveToPdf = () => {
-	hiprintTemplate.toPdf(state.preview.printData, "打印预览")
+	hiprintTemplate.toPdf(state.preview.printData, "打印预览", { isDownload: true })
 }
 
 const onPreviewPrint = () => {
@@ -426,6 +445,7 @@ const createProviders = () => {
 					custom: true,
 					type: "text",
 				},
+
 				{
 					tid: "defaultProviderModule.longText",
 					title: "长文本",
@@ -433,9 +453,7 @@ const createProviders = () => {
 					formatter(title, value, options, templateData) {
 						templateData = templateData || {}
 						//使用则表达式将符合 ${value} 格式的多个内容替换为 templateData 中的 value
-						return title.replace(/\$\{(\w+)\}/g, (match, key) => {
-							return templateData[key] || ""
-						})
+						return title.replace(/\$\{(\w+)}/g, (match, key) => templateData[key] || "")
 					},
 					options: {
 						width: 200,
@@ -480,7 +498,6 @@ const createProviders = () => {
 					columns: [[{}]],
 					...commonTableParams,
 				},
-
 				{
 					tid: "defaultProviderModule.image",
 					title: "图片",
@@ -488,6 +505,11 @@ const createProviders = () => {
 					options: {
 						src: `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAwxJREFUeF7tmj9oFEEUxt+qJzF30YjRC9joIZoi54GFVdC73uIKi5DCMrViJQhJQLASrVOmCCksrrDPRVJZCJsNcoqcNkIuRo3m7hSPsPIkK7m4OzO7s28zw87AVjt/3veb780b7taClDcr5frBADAOSDkBkwIpN4A5BE0KmBRIOQGhFLB33FnLgpsAUNaEV91yYa44ZNV58XIB7Imf4U2k4nvXhbnSkDXLio0JwNlxy64FyyqKE43JcqHCcgITgM677wHiuYAJYK3t4u7rkvdBpqhfzVmVoJfSADLOOuDTnZoUdWXS/WgAoOiTDx72ifnx+BH0iuNJC+StRwNgcHEJTiwu/bf4lxc1XkBJv6cBcOZW1VeIgi6gAYD2xzQ42FLjAL8z4OfUpIqHIY0DcOe9CnDMWQcUL3sALmw0AB9sd0bH/j4xNDoAMQT3b4r771fBbm/1TVnKjcCTSxOyy6gPwE+8pzoGCGoDYImPCYK6AETExwBBTQBhxEtCSA4AnuDeQYYnOOavX4siXgJCMgD8RPmVMhnxESHQA2CJ2g8hDvERINACEBHlpcLBOi9b4AVLJB0AEfGyInnjBSDQAFBBvGA6xA9AJfECEOIFoKJ4DoT4AKgsngEhHgA6iA+AIA9AJ/EehH33DzkACxuNsvcjhV9J2m13oLfZ4lWrvvdHslk4ns+HGhOl8x6E6ACm39ofap+bF1iLd9acKLHBQKEAR3PZSGPDDKqeLXycv1K6GDSG+cfIxOvlb++628OsBX+3WtBrbYaJCTL5c4k4AIO6PDi8vXqtcpoMQCjlh9DZADAOIE4BrAK7nTapuWUqBnkK/Go2ASFQNpmKQQ4gShUIAwtLpcy9gRxAGDGH0VcKwG3nVf3l90/4dZi27cap8yvPi9cDv3JhXoSmG/bd2lbzqbbqAaA6Urg3P1Z6FukihIN0dgFv91Ef9ztB7IROeNP9OsO7FqviFMz70UzWZlnfi1UIgCrCKOIwACio6jSncYBOu0URq3EABVWd5jQO0Gm3KGI1DqCgqtOcfwCkbM5QNMEp0gAAAABJRU5ErkJggg==`,
 					},
+				},
+				{
+					tid: "defaultProviderModule.html",
+					title: "HTML",
+					type: "html",
 				},
 			]),
 		]
@@ -550,6 +572,7 @@ const init = () => {
 			props.template.panels[0].paperHeader = 49.5
 			props.template.panels[0].paperFooter = 780
 		}
+		state.isRotate = props.template.panels?.[0]?.rotate
 	}
 
 	hiprintTemplate = new hiprint.PrintTemplate({
@@ -601,8 +624,8 @@ onMounted(() => {
 	init()
 })
 </script>
-<style scoped lang="less">
-:deep(.hiprint-printElement-type > li > ul > li > a) {
+<style lang="less">
+.hiprint-printElement-type > li > ul > li > a {
 	padding: 4px 4px;
 	color: #1296db;
 	line-height: 1;
@@ -610,7 +633,35 @@ onMounted(() => {
 	text-overflow: ellipsis;
 }
 
-:deep(.hiprint-printPaper) {
+.hiprint-printPaper {
 	z-index: 0;
+}
+
+.printer-preview-modal {
+	.ant-modal {
+		max-width: max-content;
+	}
+
+	.ant-modal-content {
+		padding: 0 !important;
+		background: #f1f1f1;
+
+		.ant-modal-header {
+			padding: 20px 16px;
+			margin-bottom: 0;
+			background: #f1f1f1;
+		}
+
+		.ant-modal-body {
+			padding: 0 0 20px 0;
+			background: #f1f1f1;
+
+			.hiprint-printPanel {
+				background: #fff;
+				border-top: 1px #000 dashed;
+				border-bottom: 1px #000 dashed;
+			}
+		}
+	}
 }
 </style>

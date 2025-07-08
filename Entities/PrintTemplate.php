@@ -10,23 +10,23 @@ use Modules\Starter\Entities\BaseModel;
 
 class PrintTemplate extends BaseModel
 {
-    use NodeTrait,Authorisations;
+	use NodeTrait, Authorisations;
 
-    protected $model_name = '打印模板';
+	protected $model_name = '打印模板';
 
 
-    protected $casts = [
-        'template' => 'array',
-        'business_variables' => 'array',
-    ];
+	protected $casts = [
+		'template' => 'array',
+		'business_variables' => 'array',
+	];
 
-    protected $hidden = [
-        '_lft',
-        '_rgt',
-    ];
+	protected $hidden = [
+		'_lft',
+		'_rgt',
+	];
 
-    public function histories(): HasMany
-    {
-        return $this->hasMany(PrintHistory::class);
-    }
+	public function histories(): HasMany
+	{
+		return $this->hasMany(PrintHistory::class);
+	}
 }

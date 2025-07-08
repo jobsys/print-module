@@ -89,7 +89,7 @@ class PrintController extends BaseManagerController
 			$result = PrintTemplate::where('id', $input['id'])->update($input);
 		} else {
 			$input['slug'] = land_slug($input['name'], PrintTemplate::class);
-			$input['creator_id'] = $this->login_user_id;
+			$input['creator_id'] = auth()->id();
 			$result = PrintTemplate::create($input);
 		}
 
@@ -158,7 +158,7 @@ class PrintController extends BaseManagerController
 
 		$new_print_template = $print_template->replicate();
 		$new_print_template->name = $new_print_template->name . '_' . now()->format('YmdHis');
-		$new_print_template->creator_id = $this->login_user_id;
+		$new_print_template->creator_id = auth()->id();
 		$new_print_template->parent_id = $print_template->parent_id ?: $print_template->id;
 		$new_print_template->created_at = now();
 		$new_print_template->save();

@@ -20,11 +20,13 @@ php artisan module:enable Print && php artisan migrate
 
   ```json5
   {
-      "vue-plugin-hiprint": "0.0.56"        //打印插件
-  }
+	"vue-plugin-hiprint": "0.0.56"
+	//打印插件
+}
   ```
 
 ### 配置
+
 #### 权限配置
 
 `app/Boot/BootPermission::permisions()`
@@ -46,6 +48,17 @@ php artisan module:enable Print && php artisan migrate
 
 ```
 
+#### 菜单配置
+
+`config/default/menus.php`
+
+```php
+[
+	"displayName" => "打印设置",
+	"page" => "page.manager.print.index",
+],
+```
+
 ```bash
 # 同步权限
 php artisan permission:sync
@@ -59,32 +72,59 @@ php artisan permission:sync
 
 #### 开发规范
 
-1. 提供了打印模板的增删改查和复制功能。打印模板有一个 `parent_id`（原型模板）的属性，没有 `parent_id` 的模板为原型模板，有 `parent_id` 的模板为原型模板的副本。
+1. 提供了打印模板的增删改查和复制功能。打印模板有一个 `parent_id`（原型模板）的属性，没有 `parent_id` 的模板为原型模板，有
+   `parent_id` 的模板为原型模板的副本。
 
-   > 注意：如果创建的时候选择了一个复制出来的模板（即有 `parent_id`）做原型模板，那么创建出来的模板 `parent_id` 为原型模板的 `parent_id`，而不是原型模板的 `id`。
+   > 注意：如果创建的时候选择了一个复制出来的模板（即有 `parent_id`）做原型模板，那么创建出来的模板 `parent_id` 为原型模板的
+   `parent_id`，而不是原型模板的 `id`。
 
 2. 打印模板可以设置业务参数，设置的业务参数将会在设计打印模板时列出并可以拖拽使用。
 
 ### 打印模板设计
 
-打印模板设计使用的是 [vue-plugin-hiprint](https://gitee.com/CcSimple/vue-plugin-hiprint) 插件，该插件是基于 [hiprint](http://hiprint.io/docs/start) 开发的，具体使用方法请参考 [vue-plugin-hiprint](https://gitee.com/CcSimple/vue-plugin-hiprint) 插件的文档。
+打印模板设计使用的是 [vue-plugin-hiprint](https://gitee.com/CcSimple/vue-plugin-hiprint)
+插件，该插件是基于 [hiprint](http://hiprint.io/docs/start)
+开发的，具体使用方法请参考 [vue-plugin-hiprint](https://gitee.com/CcSimple/vue-plugin-hiprint) 插件的文档。
 设计好的打印模板将会以 `JSON` 保存在数据库中。
 
-1. 需要在页面引入 [`print-lock.css`](https://gitee.com/sinceow/land-docs/raw/master/attachments/print-lock.css ':ignore :target=_blank')文件，否则在打印时可能会出现多页内容重叠的情况。可以参考 [【vue-plugin-hiprint】使用-入门篇](https://mp.weixin.qq.com/s/4N4f7CkxodA-fuTJ_FbkOQ)
+1. 需要在页面引入 [
+   `print-lock.css`](https://gitee.com/sinceow/land-docs/raw/master/attachments/print-lock.css ':ignore :target=_blank')
+   文件，否则在打印时可能会出现多页内容重叠的情况。可以参考 [【vue-plugin-hiprint】使用-入门篇](https://mp.weixin.qq.com/s/4N4f7CkxodA-fuTJ_FbkOQ)
 
-2. 引用方式 `<link rel="stylesheet" media="print" type="text/css" href="{{asset('print-lock.css')}}">`，使用 `import` 引入方式无效。
+2. 引用方式 `<link rel="stylesheet" media="print" type="text/css" href="{{asset('print-lock.css')}}">`，使用 `import`
+   引入方式无效。
 
 3. `main.js`
 
    ```js
    import { hiPrintPlugin } from "vue-plugin-hiprint"
 
-    //禁止链接打印机
+	//禁止链接打印机
    hiPrintPlugin.disAutoConnect()
 
-    //在 setup 函数中挂载打印插件
-    app.use(hiPrintPlugin, "$pluginName")
+	//在 setup 函数中挂载打印插件
+	app.use(hiPrintPlugin, "$pluginName")
    ```
+
+4. 设计自定义 `table`
+   > 用这个更好用：https://demo.jobsys.cn/ckeditor-printer/dist/
+   >
+   > 用这个更好用：https://demo.jobsys.cn/ckeditor-printer/dist/
+   >
+   > 用这个更好用：https://demo.jobsys.cn/ckeditor-printer/dist/
+	1. 先在 `Excel` 中设计好表格，变量使用 `\${}` 包裹，如 `\${name}`。
+	2. 复制 `Excel` 表格，粘贴到 [表格转换](https://www.lingdaima.com/table/) 得到 `HTML` 代码
+	3. 在设计窗口添加一个 `HTML` 功能，选择 `高级` - `格式化函数` 并使用以下代码
+
+```js
+function (title, value, options, templateData, target) {
+	var html = `替换成上面的HTML内容`
+
+	return options && Object.keys(options).length
+		? html.replace(/\${(\S+)}/g, (match, key) => options[key])
+		: html
+}
+```
 
 ### 打印
 
@@ -139,25 +179,25 @@ web/components/PrintDesigner.vue         # 打印模板设计组件，集成了�
 
 + **`PrintService`**
 
-    - `print` 打印
+	- `print` 打印
 
-      ```php
-      /**
-      * 打印
-      * @param int $template_id 打印模板id
-      * @param object|array $data 打印数据, 如果为数组，表示打印多份
-      * @return Response
-       */
-       public function print(int $template_id, object|array $data): Response
-      ```
+	  ```php
+	  /**
+	  * 打印
+	  * @param int $template_id 打印模板id
+	  * @param object|array $data 打印数据, 如果为数组，表示打印多份
+	  * @return Response
+	   */
+	   public function print(int $template_id, object|array $data): Response
+	  ```
 
-    - `createTemplate` 初始化打印模板，主要是在系统初始化的时候在 Seeder 中生成打印模板
+	- `createTemplate` 初始化打印模板，主要是在系统初始化的时候在 Seeder 中生成打印模板
 
-      ```php
-      /**
-      * 初始化打印模板
-      * @param string $display_name
-      * @param string $description
-      * @return void
-       */
-       public function createTemplate(string $display_name, string $description): void
+	  ```php
+	  /**
+	  * 初始化打印模板
+	  * @param string $display_name
+	  * @param string $description
+	  * @return void
+	   */
+	   public function createTemplate(string $display_name, string $description): void

@@ -33,11 +33,11 @@ return new class extends Migration {
 			$table->comment('打印历史表');
 		});
 
-    }
+	}
 
-    public function down()
-    {
-        Schema::dropIfExists('print_templates');
-        Schema::dropIfExists('print_histories');
-    }
+	public function down()
+	{
+		Schema::dropIfExists('print_templates');
+		Schema::dropIfExists('print_histories');
+	}
 };
