@@ -7,7 +7,7 @@ use App\Http\Controllers\BaseManagerController;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\Print\Entities\PrintTemplate;
-use Modules\Starter\Emnus\State;
+use Modules\Starter\Enums\State;
 
 class PrintController extends BaseManagerController
 {
